@@ -13,5 +13,17 @@ virtual memory system.
 
 ## Process Guts 
 
+## Process Groups
+
+## Process Sessions 
 
 ## Fork()
+
+
+## setpgid(pid_t pid, pid_t pgid)
+- this function shall either join an existing process group or create a new processe group within the session of the calling process. 
+- the process group ID of a session leader shall not change. 
+- upon success, the pgid of the process with the pid that matches the pid in args shall be set to the pgid arg. 
+- a special case, if pid is 0, the process ID of the calling process shall be used. 
+- also if the pgid is 0, the process ID of the indicated process shall be used
+- returns 0 on success and -1 on failure. 

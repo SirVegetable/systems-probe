@@ -23,7 +23,7 @@ int main()
         std::cout << "child1 group pid is: " << getpgrp() << '\n'; 
         exit(0); 
     } 
-
+    /* race condition here or onwards to the waitpids, a 1 microsecond sleep prevents it */
     auto child2 = fork(); 
     if(child2 == 0)
     {

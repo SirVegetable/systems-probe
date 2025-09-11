@@ -8,3 +8,7 @@ target_compile_options(increment_counter PRIVATE -Wall -Wextra -Werror)
 add_executable(increment_shared_semaphore increment_shared_semaphore.cpp)
 target_compile_features(increment_shared_semaphore PRIVATE cxx_std_23)
 target_compile_options(increment_shared_semaphore PRIVATE -Wall -Wextra -Werror)
+
+add_executable(mapped_sizing mapped_sizing.cpp)
+target_compile_features(mapped_sizing PRIVATE cxx_std_23)
+target_compile_options(mapped_sizing PRIVATE -Wall -Wextra -Werror)

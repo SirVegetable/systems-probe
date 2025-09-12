@@ -12,3 +12,7 @@ target_compile_options(increment_shared_semaphore PRIVATE -Wall -Wextra -Werror)
 add_executable(mapped_sizing mapped_sizing.cpp)
 target_compile_features(mapped_sizing PRIVATE cxx_std_23)
 target_compile_options(mapped_sizing PRIVATE -Wall -Wextra -Werror)
+
+add_executable(growing_file growing_file.cpp)
+target_compile_features(growing_file PRIVATE cxx_std_23)
+target_compile_options(growing_file PRIVATE -Wall -Wextra -Werror)

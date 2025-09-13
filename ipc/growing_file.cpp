@@ -12,7 +12,7 @@
 * 
 * Steps: 
 * 1) open a file or creating it if it does not exist or truncating it if it does exist.
-* the file iis memory mapped with a size of 32768, even the file's current size is 0. 
+* the file is memory mapped with a size of 32768, even the file's current size is 0. 
 * 2) increase the size of the file, 4096 bytes at a time, by calling ftruncate, and then
 * fetch the byte that is now the final byte of the file. 
 */

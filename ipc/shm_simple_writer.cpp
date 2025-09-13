@@ -5,9 +5,9 @@
 #include <fcntl.h> 
 #include <cstdlib>
 
-struct ReaderRole
+struct WriterRole
 {
-    mode_t mode = O_RDONLY; 
+    mode_t mode = O_RDWR; 
     mode_t permissions = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 }; 
 
@@ -20,14 +20,15 @@ int main(int argc, char* argv[])
     unsigned char* ptr; 
     if(argc != 2)
     {
-        std::cerr << "incorrect usage: <name> \n"; 
+        std::cerr << "incorrect usage: <file name> \n"; 
         exit(1); 
     }
-    constexpr ReaderRole role;  
+    constexpr WriterRole role{}; 
+
     fd = shm_open(argv[1], role.mode, role.permissions); 
     if(fd == -1)
     {
-        std::cerr << "could not open ipc name: " << argv[1] << "\n"; 
+        std::cerr << "could not open ipc name: " << argv[1] << '\n'; 
         exit(1); 
     }
     err = fstat(fd, &mem_stats); 
@@ -36,16 +37,12 @@ int main(int argc, char* argv[])
         std::cerr << "failed to retrieve shared memory object\n";
         exit(1);  
     }
-    ptr = static_cast<unsigned char*>(mmap(nullptr, mem_stats.st_size, PROT_READ, MAP_SHARED, fd, 0)); 
+    ptr = static_cast<unsigned char*>(mmap(nullptr, mem_stats.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)); 
     close(fd); 
-    unsigned char c; 
+
     for(i = 0; i < mem_stats.st_size; i++)
     {
-        if((c = *ptr++) != (i % 256))
-        {
-            std::cerr << "ptr at index: " << i << " is erroneous and equals: " << c << "\n";  
-            exit(1); 
-        }
+        *ptr++ = i % 256; 
     }
     return 0; 
 }

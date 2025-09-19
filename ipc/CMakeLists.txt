@@ -31,3 +31,7 @@ target_compile_options(shm_simple_reader PRIVATE -Wall -Wextra -Werror)
 add_executable(shm_simple_writer shm_simple_writer.cpp)
 target_compile_features(shm_simple_writer PRIVATE cxx_std_23)
 target_compile_options(shm_simple_writer PRIVATE -Wall -Wextra -Werror)
+
+add_executable(shm_fixed_array shm_fixed_array.cpp)
+target_compile_features(shm_fixed_array PRIVATE cxx_std_23)
+target_compile_options(shm_fixed_array PRIVATE -Wall -Wextra -Werror)

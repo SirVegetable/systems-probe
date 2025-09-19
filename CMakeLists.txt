@@ -3,3 +3,5 @@ project(systems-probe LANGUAGES CXX)
 
 add_subdirectory(processes)
 add_subdirectory(ipc)
+add_subdirectory(allocation)
+add_subdirectory(bipc)

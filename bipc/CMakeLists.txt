@@ -22,3 +22,8 @@ add_executable(shm_vector shm_vector.cpp)
 target_include_directories(shm_vector PRIVATE ${Boost_INCLUDE_DIRS})
 target_compile_features(shm_vector PRIVATE cxx_std_23)
 target_compile_options(shm_vector PRIVATE -Wall -Wextra -Werror)
+
+add_executable(containers_of_containers containers_of_containers.cpp)
+target_include_directories(containers_of_containers PRIVATE ${Boost_INCLUDE_DIRS})
+target_compile_features(containers_of_containers PRIVATE cxx_std_23)
+target_compile_options(containers_of_containers PRIVATE -Wall -Wextra -Werror)

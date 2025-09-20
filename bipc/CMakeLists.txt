@@ -17,3 +17,8 @@ add_executable(offset_ptr_basics offset_ptr_basics.cpp)
 target_include_directories(offset_ptr_basics PRIVATE ${Boost_INCLUDE_DIRS})
 target_compile_features(offset_ptr_basics PRIVATE cxx_std_23)
 target_compile_options(offset_ptr_basics PRIVATE -Wall -Wextra -Werror)
+
+add_executable(shm_vector shm_vector.cpp)
+target_include_directories(shm_vector PRIVATE ${Boost_INCLUDE_DIRS})
+target_compile_features(shm_vector PRIVATE cxx_std_23)
+target_compile_options(shm_vector PRIVATE -Wall -Wextra -Werror)

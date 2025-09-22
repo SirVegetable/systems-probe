@@ -33,3 +33,8 @@ add_executable(unordered_containers unordered_containers.cpp)
 target_include_directories(unordered_containers PRIVATE ${Boost_INCLUDE_DIRS})
 target_compile_features(unordered_containers PRIVATE cxx_std_23)
 target_compile_options(unordered_containers PRIVATE -Wall -Wextra -Werror)
+
+add_executable(multi_index multi-index.cpp)
+target_include_directories(multi_index PRIVATE ${Boost_INCLUDE_DIRS})
+target_compile_definitions(multi_index PRIVATE cxx_std_23)
+target_compile_options(multi_index PRIVATE -Wall -Wextra -Werror)

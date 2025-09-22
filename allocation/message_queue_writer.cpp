@@ -17,7 +17,7 @@ int main()
     } remover; 
 
     managed_shared_memory segment(create_only, "SHMQUEUE", PS * 2); 
-    ShmStringAllocator str_alloc = segment.get_allocator<char>(); 
+    ShmStringAllocator str_alloc(segment.get_segment_manager()); 
     std::cout << "THE SIZE OF THE ALLOCATOR IS: " << sizeof(str_alloc) << "\n"; 
     return 0; 
 }

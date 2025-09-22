@@ -26,4 +26,10 @@ target_compile_options(shm_vector PRIVATE -Wall -Wextra -Werror)
 add_executable(containers_of_containers containers_of_containers.cpp)
 target_include_directories(containers_of_containers PRIVATE ${Boost_INCLUDE_DIRS})
 target_compile_features(containers_of_containers PRIVATE cxx_std_23)
-target_compile_options(containers_of_containers PRIVATE -Wall -Wextra -Werror)
+# target_compile_options(containers_of_containers PRIVATE -Wall -Wextra -Werror)
+
+
+add_executable(unordered_containers unordered_containers.cpp)
+target_include_directories(unordered_containers PRIVATE ${Boost_INCLUDE_DIRS})
+target_compile_features(unordered_containers PRIVATE cxx_std_23)
+target_compile_options(unordered_containers PRIVATE -Wall -Wextra -Werror)

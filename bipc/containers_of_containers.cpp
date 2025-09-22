@@ -1,5 +1,5 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/inreprocess/allocators/allocator.hpp> 
+#include <boost/interprocess/allocators/allocator.hpp> 
 #include <boost/interprocess/containers/map.hpp> 
 #include <boost/interprocess/containers/string.hpp> 
 #include <boost/interprocess/containers/vector.hpp> 
@@ -15,7 +15,6 @@ using int_vector_allocator = allocator<int_vector, segment_manager_t>;
 using vector_of_int_vectors = vector<int_vector, int_vector_allocator>; 
 using char_allocator = allocator<char, segment_manager_t>; 
 using char_string = basic_string<char, std::char_traits<char>, char_allocator>; 
-
 
 class ComplexData
 {
@@ -33,7 +32,7 @@ class ComplexData
         {}
 
     private:
-        int id_;  
+        int id_{0};  
         char_string string_data; 
         vector_of_int_vectors vecs; 
 
@@ -45,18 +44,18 @@ class ComplexData
 using MapValueType = std::pair<const char_string, ComplexData>; 
 using MovableToMapValue = std::pair<char_string, ComplexData>;
 using MapValueTypeAllocator = allocator<MapValueType, segment_manager_t>; 
-using ComplexMapType = map<char_string, ComplexData, std::less<char_string>>; 
+using ComplexMapType = boost::container::map<char_string, ComplexData, std::less<char_string>, MapValueTypeAllocator>; 
 
 int main()
 {
-    struct Remover
+    struct shm_remover
     {
         shm_remover() { shared_memory_object::remove("MySharedMemory"); }
         ~shm_remover() { shared_memory_object::remove("MySharedMemory"); }
     } remover;
 
     managed_shared_memory segment(create_only, "MySharedMemory", 65536); 
-    void_alloc alloc_inst(segment.get_segment_manager()); 
+    void_allocator alloc_inst(segment.get_segment_manager()); 
 
     /* construct the shared memory map and fill it */
     ComplexMapType* my_map = segment.construct<ComplexMapType>

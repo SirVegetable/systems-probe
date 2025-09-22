@@ -24,11 +24,16 @@ void print_array(const int* ptr, std::size_t size)
 
 int main()
 {
-   
+    #if defined(__APPLE__)
+        return 0;
+    #else 
+
     int arr[get_array_depending(10, 2)]; 
     const auto arr_size = sizeof(arr) / sizeof(int); 
     std::cout << "the size of the array is: " << arr_size << "\n"; 
 
     fill_array_with(1, arr_size, arr); 
     print_array(arr, arr_size); 
+
+    #endif
 }

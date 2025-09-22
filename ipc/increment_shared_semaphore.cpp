@@ -25,6 +25,12 @@ Shared shared{};
 
 int main(int argc, char* argv[])
 {
+
+    #if defined(__APPLE__)
+        std::cerr << "the file mode is: "<< FILE_MODE << "the args are: " << argv[1] << "\n"; 
+        return argc;
+    #else 
+
     int fd, i, nloop = 0;
     Shared* ptr; 
 
@@ -67,4 +73,6 @@ int main(int argc, char* argv[])
         sem_post(&ptr->mutex); 
     }
     return 0; 
+
+    #endif 
 }

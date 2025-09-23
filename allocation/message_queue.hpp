@@ -12,7 +12,7 @@ namespace shm
     using string = boost::container::basic_string<char, std::char_traits<char>, shm::allocator<char>>; 
 }
 
-template<typename T, typename Alloc> 
+template<typename T, typename Meta, typename Alloc> 
 class MessageQueue
 {
     public: 
@@ -28,15 +28,68 @@ class MessageQueue
         using difference_type = typename std::allocator_traits<Alloc>::difference_type; 
         using iterator = pointer; 
         using const_iterator = const_pointer; 
-        /* maybe add reverse iterators */
+        using reverse_iterator = std::reverse_iterator<iterator>; 
+        using const_reverse_iterator = const reverse_iterator; 
 
+        constexpr iterator begin() return { _begin; }
+        constexpr iterator end() return { _begin + _size; }
+        constexpr const_iterator begin() const noexcept { return _begin; }
+        constexpr const_iterator end() const noexcept { return _begin + _size; }
+        constexpr reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
+        constexpr reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
+        constexpr const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
+        constexpr const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
+        constexpr const_iterator cbegin() const noexcept { return _begin; }
+        constexpr const_iterator cend() const noexcept { return _begin + _size; }
+        constexpr const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(end()); }
+        constexpr const_reverse_iterator crend() const noexcept { return const_reverse_iterator(begin()); }
+
+        [[nodiscard]] constexpr auto get_range_header() const noexcept 
+        {
+            return _header; 
+        }
+
+        [[nodiscard]] constexpr auto is_empty() const noexcept 
+        {
+            return _size == 0; 
+        }
+
+        constexpr size_type size() const noexcept
+        {
+            return _size; 
+        }
         
+        MessageQueue(const Alloc& alloc) : 
+            alloc_inst(alloc), 
+            begin(nullptr), 
+            size{0}
+        {}
 
+        // void constexpr destroy_range()
+        // {
+
+        // }
+
+        // bool try_pushing_one(const value_type& val) noexcept(noexcept)
+        // {
+            
+        // }
+
+        // bool try_emplacing_one(value_type&& val) noexcept(noexcept)
+        // {
+            
+        // }
+
+        // bool try_pushing_range(); 
+        // bool try_emplacing_range(); 
+
+    
     private: 
         allocator_type alloc_inst; 
-        pointer begin; 
-        size_type capacity; 
-        size_type size; 
-        
+        Meta _header; 
+        pointer _data; 
+        size_type _capacity; 
+        size_type read_index; 
+        size_type write_index; 
 }; 
 

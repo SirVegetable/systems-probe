@@ -8,7 +8,7 @@
 
 
 template<typename T, typename Meta, typename Alloc> 
-class MessageQueue
+class FixedMessageQueue
 {
     public: 
 
@@ -46,7 +46,7 @@ class MessageQueue
 
         [[nodiscard]] constexpr auto is_empty() const noexcept 
         {
-            return _size == 0; 
+            return read_index == write_index; 
         }
 
         constexpr size_type size() const noexcept
@@ -54,11 +54,16 @@ class MessageQueue
             return _size; 
         }
         
-        MessageQueue(const Alloc& alloc) : 
+        FixedMessageQueue(const Alloc& alloc, const Meta& h, std::size_t Cap) : 
             alloc_inst(alloc), 
-            begin(nullptr), 
-            size{0}
+            _header(h),
+            
         {}
+
+        FixedMessageQueue(const FixedMessageQueue& rhs) = delete; 
+        FixedMessageQueue& operator=(const FixedMessageQueue& rhs) = delete; 
+        FixedMessageQueue(FixedMessageQueue&& rhs) = delete; 
+        FixedMessageQueue(FixedMessageQueue&& lhs) = delete; 
 
         // void constexpr destroy_range()
         // {
@@ -73,12 +78,13 @@ class MessageQueue
         // bool try_pushing_range(); 
 
     
-    private: 
+    private:
         allocator_type alloc_inst; 
         Meta _header; 
         pointer _data; 
-        size_type _capacity; 
+        std::size_t _capacity; 
         size_type read_index; 
         size_type write_index; 
+       
 }; 
 

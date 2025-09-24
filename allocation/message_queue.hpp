@@ -3,14 +3,9 @@
 #include <boost/containers/string> 
 #include <boost/interprocess/managed_shared_memory.hpp> 
 #include <memory> 
+#include <iterator>
 
-namespace bipc = boost::interprocess; 
 
-namespace shm
-{
-    template<typename T> using allocator = bipc::allocator<T, bipc::segment_manager>; 
-    using string = boost::container::basic_string<char, std::char_traits<char>, shm::allocator<char>>; 
-}
 
 template<typename T, typename Meta, typename Alloc> 
 class MessageQueue
@@ -75,13 +70,7 @@ class MessageQueue
             
         // }
 
-        // bool try_emplacing_one(value_type&& val) noexcept(noexcept)
-        // {
-            
-        // }
-
         // bool try_pushing_range(); 
-        // bool try_emplacing_range(); 
 
     
     private: 

@@ -4,7 +4,7 @@
 #include <boost/interprocess/managed_shared_memory.hpp> 
 #include <memory> 
 #include <iterator>
-
+#include <mutex> 
 
 
 template<typename T, typename Meta, typename Alloc> 
@@ -39,52 +39,70 @@ class FixedMessageQueue
         constexpr const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(end()); }
         constexpr const_reverse_iterator crend() const noexcept { return const_reverse_iterator(begin()); }
 
-        [[nodiscard]] constexpr auto get_range_header() const noexcept 
+        [[nodiscard]] constexpr Meta get_range_header() const noexcept 
         {
             return _header; 
         }
 
         [[nodiscard]] constexpr auto is_empty() const noexcept 
         {
-            return read_index == write_index; 
+            return current_index == write_index; 
         }
 
-        constexpr size_type size() const noexcept
+        constexpr size_type get_window_size() const noexcept
         {
-            return _size; 
+            return write_index - current_index; 
         }
         
         FixedMessageQueue(const Alloc& alloc, const Meta& h, std::size_t Cap) : 
             alloc_inst(alloc), 
             _header(h),
-            
-        {}
+            _capacity(Cap),
+            current_index{0}, 
+            write_index{0},  
+            anchor_index{0}
+        {
+            // constexpr const std::size_t alignment = alignof(T); 
+
+            _data = alloc_inst.allocate(_capacity); 
+        }
+
+        ~FixedMessageQueue()
+        {
+
+        }
+
 
         FixedMessageQueue(const FixedMessageQueue& rhs) = delete; 
         FixedMessageQueue& operator=(const FixedMessageQueue& rhs) = delete; 
         FixedMessageQueue(FixedMessageQueue&& rhs) = delete; 
         FixedMessageQueue(FixedMessageQueue&& lhs) = delete; 
 
-        // void constexpr destroy_range()
-        // {
+        void destroy_last_range()
+        {
 
-        // }
+        }
 
-        // bool try_pushing_one(const value_type& val) noexcept(noexcept)
-        // {
-            
-        // }
+        bool try_pushing_range(const Meta& h, const std::vector<P>& vals)
+        {
 
-        // bool try_pushing_range(); 
+        }
 
-    
+        iterator search_window_for(auto&& Callable)
+        {
+
+        }
+
     private:
+
         allocator_type alloc_inst; 
         Meta _header; 
         pointer _data; 
         std::size_t _capacity; 
-        size_type read_index; 
+        size_type current_index; 
+        size_type anchor_index; 
         size_type write_index; 
+        mutable std::mutex m; 
        
 }; 
 

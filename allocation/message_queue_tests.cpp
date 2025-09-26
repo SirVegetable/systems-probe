@@ -2,6 +2,7 @@
 #include <boost/interprocess/allocators/allocator.hpp> 
 #include <iostream> 
 #include <cstdint> 
+#include "message_queue.hpp"
 
 static constexpr std::size_t PS = 4096; 
 

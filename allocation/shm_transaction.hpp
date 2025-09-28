@@ -6,7 +6,9 @@
 #include "common.hpp"
 #include <cstring> 
 #include <string_view> 
-#include <array> 
+#include <array>
+
+
 namespace shm 
 {
 
@@ -58,7 +60,6 @@ struct TransactionV3
     std::uint64_t nonce; 
 };
 
-template<typename UInt256Type = std::array<std::uint64_t, 4>> 
 struct TransactionV4
 {
     TransactionV4(const char r[20], const char s[20], std::string_view hex_v, std::uint64_t n, const char* str, const shm::allocator<char>& alloc) : 
@@ -67,22 +68,19 @@ struct TransactionV4
     {
         std::memcpy(recipient, r, 20); 
         std::memcpy(sender, s, 20); 
-        std::memset(value.data(), 0, value.size()); 
-        if(hex_v.size() > 3)
-        {
-            value[0] = static_cast<std::uint64_t>(hex_v[1] + hex_v[2]); 
-        }
+        value = convert_hex_to_le_uint256(hex_v); 
         std::memset(prefix, 0, 8); 
+        
         if(std::strlen(str) > 10)
         {
-            std::memcpy(prefix, str + 2, 9); 
+            std::memcpy(prefix, str + 2, 8); 
         }
     }   
     char recipient[20];
     char sender[20]; 
     char prefix[8]; 
     std::uint64_t nonce; 
-    UInt256Type value; 
+    std::array<std::uint64_t, 4> value; 
     shm::string input; 
 }; 
 

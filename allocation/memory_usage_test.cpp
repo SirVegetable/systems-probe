@@ -7,7 +7,7 @@
 #define SHM_NAME "TXSHM"
 
 static constexpr const char* input1 = "0x604080408786abcde9900088aacc"; 
-static constexpr const char* input2 = "0x";
+static constexpr const char* input2 = "";
 static constexpr const char* input3 = "0x80808080775566"; 
 
 std::array<std::string, 6> values = {
@@ -46,6 +46,21 @@ int main(int argc, char* argv[])
         std::cout << "the vector capacity is: " << writer_vec->capacity() << "\n"; 
         std::cout << "the size of the vector class is: " << sizeof(shm::vector<shm::TransactionV4>) << "\n"; 
 
+        auto init_cap = shm_manager->get_free_memory(); 
+        writer_vec->push_back(shm::TransactionV4(addr1, addr2, "0x1", tnonce, input2, void_alloc)); 
+        std::cout << "after the first transaction the capacity is: " << writer_vec->capacity() << '\n'; 
+        auto after_empty_input = shm_manager->get_free_memory(); 
+        std::cout << "after pushing an empty input value the amount of memory taken up was: " << init_cap - after_empty_input <<'\n'; 
+        std::cout << "the amount of memory taken that was not part of the transaction class was: " << init_cap - after_empty_input - sizeof(shm::TransactionV4) << '\n'; 
+        writer_vec->pop_back(); 
+        const auto after_popback = shm_manager->get_free_memory(); 
+        std::cout << "after popping the empty tx, was memory returned? " << ((init_cap - after_popback) == 0) << '\n'; 
+        auto input_size = constructor_input.size(); 
+        writer_vec->push_back(shm::TransactionV4(addr1, addr2, "0x1", tnonce, constructor_input.c_str(), void_alloc)); 
+        const auto after_constructor_input = shm_manager->get_free_memory(); 
+        const auto memory_after = init_cap - after_constructor_input - sizeof(shm::TransactionV4); 
+        std::cout << "after pushing the constructor input transaction the amount of memory taken was: " << memory_after << "\n"; 
+        std::cout << "besides the constructor data the additional overhead was: " << memory_after - input_size << "\n"; 
         for(const auto& v : values)
         {
             writer_vec->push_back(shm::TransactionV4(addr1, addr2, v, tnonce, input1, void_alloc)); 
@@ -68,13 +83,7 @@ int main(int argc, char* argv[])
         
         managed_shared_memory segment(open_only, SHM_NAME); 
         auto* shm_manager = segment.get_segment_manager(); 
-        const auto* reader_vec = segment.find<shm::vector<shm::TransactionV4>>("SzVec").first; 
-
-        if(reader_vec->size() != 18)
-        {
-            segment.destroy<shm::vector<shm::TransactionV4>>("SzVec"); 
-        }
-        
+        auto* reader_vec = segment.find<shm::vector<shm::TransactionV4>>("SzVec").first; 
         for(auto iter = reader_vec->begin(); iter != reader_vec->end(); iter++)
         {
             std::cout << "the nonce is: " << iter->nonce << "\n"; 
@@ -84,7 +93,10 @@ int main(int argc, char* argv[])
         std::cout <<"\n";
 
         std::cout << "REMAINING FREE MEMORY IS: " << shm_manager->get_free_memory() << "\n"; 
+        
+        std::cout << "THE SIZE OF THE CONSTRUCTOR INPUT IS: " << constructor_input.size() << '\n'; 
         segment.destroy<shm::vector<shm::TransactionV4>>("SzVec"); 
+
     }
     return 0; 
 }

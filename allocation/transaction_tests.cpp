@@ -23,6 +23,7 @@ using TestVector = shm::vector<shm::TransactionV4>;
 
 int main(int argc, char* argv[])
 {
+    
     using namespace boost::interprocess; 
     if(argc == 1)
     {
@@ -37,6 +38,7 @@ int main(int argc, char* argv[])
 
         TestVector* test_vec = segment.construct<TestVector>("TxVector")(void_alloc); 
 
+        std::cout << "the size of Transaction V4 is: " << sizeof(shm::TransactionV4) << "\n"; 
         std::string child_args(argv[0]); 
         for(const auto& v : values)
         {

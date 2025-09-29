@@ -63,11 +63,11 @@ class FixedMessageQueue
 
         ~FixedMessageQueue()
         {
-            for(auto i = 0; i < _capacity; i++)
+            for(std::size_t i = 0; i < _capacity; i++)
             {
-                alloc_inst.destroy(_data[i]); 
+               _data[i].~T(); 
             }
-            alloc_inst.deallocate(_capacity); 
+            alloc_inst.deallocate(_data, _capacity); 
             _data = nullptr; 
         }
 

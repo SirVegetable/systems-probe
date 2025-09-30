@@ -11,6 +11,12 @@
 static constexpr std::size_t MiB = 1 << 20; 
 static constexpr std::size_t NUM_TXs = 1000; 
 
+
+static constexpr char addr1[20] = {'0','0','0','0','1','a','c','c','c','0','0','7','1','e','d','c','b','b','a','a'}; 
+static constexpr char addr2[20] = {'a','a','b','b','d','d','1','1','0','0','0','0','f','f','a','b','d','d','a','0'}; 
+static constexpr std::uint64_t tnonce = 100; 
+static constexpr const char* input1 = ""; 
+
 struct BlockHeader
 {
     std::uint64_t number{0}; 
@@ -56,6 +62,15 @@ int main()
     std::cout << "the queue and associated memory took up: " << initial_capacity - remaining << '\n'; 
     std::cout << "the allocator cost to this is: " << initial_capacity - remaining - allocated_tx_queue_size << "\n"; 
 
+
+    shm::TransactionV4 empty(addr1, addr2, "0", tnonce, input1, alloc); 
+    auto status = tx_queue->try_push_one(empty); 
+    std::cout << "successfully pushed tx: " << status << "\n"; 
+    
     segment.destroy<TestTxQueue>("QUEUE"); 
+    const auto after_destroy = shm_manager->get_free_memory(); 
+    std::cout << "AVAILABLE MEMORY AFTER DESTROYING QUEUE IS: " <<  after_destroy << '\n'; 
+    std::cout << "DIFFERENCE OF FREE MEMORY BETWEEN INIT AND AFTER DESTROY: " << initial_capacity - after_destroy << '\n';
+
     return 0; 
 }

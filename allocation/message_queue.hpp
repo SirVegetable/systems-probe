@@ -125,7 +125,19 @@ class FixedMessageQueue
             return true; 
         }
 
-
+        bool try_push_one(const T& item)
+        {
+            if(!m.try_lock())
+            {
+                return false; 
+            }
+            _data[write_index] = item; 
+            read_index = write_index; 
+            next_index(write_index); 
+            m.unlock(); 
+            return true; 
+        }
+        
     private:
         
         constexpr iterator begin() noexcept { return _data + current_index; }

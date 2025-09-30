@@ -75,7 +75,18 @@ struct TransactionV4
         {
             std::memcpy(prefix, str + 2, 8); 
         }
-    }   
+    }
+
+    TransactionV4(const TransactionV4& other, const shm::allocator<char>& other_alloc) : 
+        nonce(other.nonce), 
+        value(other.value),
+        input(other.input.begin(), other.input.end(), other_alloc)
+    {
+       std::memcpy(recipient, other.recipient, 20); 
+       std::memcpy(sender, other.recipient, 20); 
+       std::memcpy(prefix, other.prefix, 20); 
+    }
+
     char recipient[20];
     char sender[20]; 
     char prefix[8]; 

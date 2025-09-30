@@ -34,6 +34,9 @@ int main(int argc, char* argv[])
         } remover; 
 
         managed_shared_memory segment(create_only, SHM_NAME, 1049000); 
+        auto* shm_manager = segment.get_segment_manager(); 
+        const auto init_memory = shm_manager->get_free_memory(); 
+
         shm::allocator<void> void_alloc(segment.get_segment_manager()); 
 
         TestVector* test_vec = segment.construct<TestVector>("TxVector")(void_alloc); 
@@ -56,6 +59,8 @@ int main(int argc, char* argv[])
             std::cerr << "error the child failed to destroy\n"; 
             return 1; 
         }
+        const auto memory_after = shm_manager->get_free_memory(); 
+        std::cout << "THE DIFFERENCE BETWEEN MEM INIT AND AFTER IS: " << init_memory - memory_after << "\n"; 
     }
     else 
     {

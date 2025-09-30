@@ -17,6 +17,7 @@ static constexpr char addr2[20] = {'a','a','b','b','d','d','1','1','0','0','0','
 static constexpr std::uint64_t tnonce = 100; 
 static constexpr const char* input1 = ""; 
 
+static constexpr const char* input2 = "0x604080408786abcde9900088aacc8786abcde9900088aacc8786abcde9900088aacc"; 
 struct BlockHeader
 {
     std::uint64_t number{0}; 
@@ -65,8 +66,16 @@ int main()
 
     shm::TransactionV4 empty(addr1, addr2, "0", tnonce, input1, alloc); 
     auto status = tx_queue->try_push_one(empty); 
+    const auto after_empty_push = shm_manager->get_free_memory(); 
     std::cout << "successfully pushed tx: " << status << "\n"; 
+    std::cout << "did free memory change? " << (remaining != after_empty_push) << '\n'; 
     
+    shm::TransactionV4 non_empty_tx(addr1, addr2, "0x0", tnonce, input2, alloc); 
+    status = tx_queue->try_push_one(non_empty_tx);
+    std::cout << "successfully pushed tx: " << status << "\n"; 
+    std::cout << "memory difference after 2nd push: " << (after_empty_push - shm_manager->get_free_memory()) << '\n'; 
+
+    std::cout << "the window size is: " << tx_queue->get_window_size() << '\n'; 
     segment.destroy<TestTxQueue>("QUEUE"); 
     const auto after_destroy = shm_manager->get_free_memory(); 
     std::cout << "AVAILABLE MEMORY AFTER DESTROYING QUEUE IS: " <<  after_destroy << '\n'; 

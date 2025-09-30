@@ -8,6 +8,10 @@
 #include <type_traits>
 #include <cstdint> 
 
+
+/* 
+NOTICE: LEAKING IF THE TYPE HAS ITS OWN ALLOCATOR
+*/
 template<typename T, typename Meta, typename Alloc> 
 class FixedMessageQueue
 {
@@ -63,9 +67,8 @@ class FixedMessageQueue
 
         ~FixedMessageQueue()
         {
-            for(std::size_t i = 0; i < _capacity; i++)
-            {
-               _data[i].~T(); 
+            for(size_type i = 0; i < _capacity; ++i) {
+                std::allocator_traits<allocator_type>::destroy(alloc_inst, &_data[i]);
             }
             alloc_inst.deallocate(_data, _capacity); 
             _data = nullptr; 
@@ -125,17 +128,28 @@ class FixedMessageQueue
             return true; 
         }
 
-        bool try_push_one(const T& item)
+        bool try_push_one(const value_type& item)
         {
             if(!m.try_lock())
             {
                 return false; 
             }
-            _data[write_index] = item; 
-            read_index = write_index; 
-            next_index(write_index); 
+           
+            std::allocator_traits<allocator_type>::construct(alloc_inst, &_data[write_index], item);
+            write_index = next_index(write_index); 
             m.unlock(); 
             return true; 
+        }
+
+        void commit()
+        {
+            if(!m.try_lock())
+            {
+                return; 
+            }
+            current_index = write_index; 
+            write_index = next_index(write_index); 
+            m.unlock(); 
         }
         
     private:

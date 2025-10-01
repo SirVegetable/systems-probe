@@ -3,18 +3,38 @@
 
 #include <boost/interprocess/allocators/allocator.hpp> 
 #include <boost/interprocess/managed_shared_memory.hpp> 
+#include <boost/interprocess/containers/string.hpp> 
 #include <array> 
 #include <cstdint> 
 #include <string_view> 
 #include <cstring> 
 #include <scoped_allocator>
 #include <iostream> 
+#include <memory> 
+#include <utility> 
 
 
 #define SHM_NAME "TXQUEUE"
 #define MiB_SIZE 1 << 20
 
+static constexpr char addr1[20] = {'0','0','0','0','1','a','c','c','c','0','0','7','1','e','d','c','b','b','a','a'}; 
+static constexpr char addr2[20] = {'a','a','b','b','d','d','1','1','0','0','0','0','f','f','a','b','d','d','a','0'}; 
+static constexpr std::uint64_t tnonce = 100; 
+// static constexpr const char* input1 = ""; 
+
+static constexpr const char* input2 = "0x604080408786abcde9900088aacc8786abcde9900088aacc8786abcde9900088aacc"; 
+
+const std::string v = "0x01"; 
+
 namespace bip = boost::interprocess; 
+
+
+constexpr int from_hex_digit(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
+    if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
+    return -1;
+}
 
 constexpr std::array<std::uint64_t, 4> convert_hex_to_le_uint256(std::string_view hex_value)
 {
@@ -48,10 +68,11 @@ constexpr std::array<std::uint64_t, 4> convert_hex_to_le_uint256(std::string_vie
 }
 
 
+
 namespace shmv2
 {
     template<typename T> using allocator = std::scoped_allocator_adaptor<bip::allocator<T, bip::managed_shared_memory::segment_manager>>; 
-    using string = bip::string<char, std::char_traits<char>, shmv2::allocator<char>>; 
+    using string = bip::basic_string<char, std::char_traits<char>, bip::allocator<char, bip::managed_shared_memory::segment_manager>>; 
 
 
     struct Tx
@@ -82,11 +103,12 @@ namespace shmv2
 }
 
 template<typename Alloc, typename IIt> 
-void destroy_with_allocator(A& alloc, IIT bsrc, IIT esrc) noexcept 
+void destroy_with_allocator(Alloc& alloc, IIt bsrc, IIt esrc) noexcept 
 {
-    for(auto q = esrc; q != bsrc; --q)
+    while(bsrc != esrc)
     {
-        std::allocator_traits<Alloc>::destroy(q); 
+        --esrc; 
+        std::allocator_traits<Alloc>::destroy(alloc, std::to_address(esrc)); 
     }
 }
 
@@ -111,9 +133,9 @@ class MessageBuffer
         MessageBuffer(const allocator_type& a, std::size_t cap) : 
             _alloc(a), 
             _capacity(cap), 
-            _current(0), 
+            _current(0)
         {
-            _data = std::allocator_traits<allocator_type>::allocate(_alloc, _capacity, std::no_throw); 
+            _data = std::allocator_traits<allocator_type>::allocate(_alloc, _capacity); 
         }
         
         MessageBuffer(const MessageBuffer& rhs) = delete;
@@ -123,8 +145,9 @@ class MessageBuffer
 
         ~MessageBuffer()
         {
-            if(!is_empty()) {destroy_with_allocator(_alloc, begin(), end())}; 
-            std::allocator_traits<allocator_type>::deallocate(_alloc, _data, _capacity, std::no_throw); 
+            if(!is_empty()) {destroy_with_allocator(_alloc, begin(), end()); }; 
+            std::allocator_traits<allocator_type>::deallocate(_alloc, _data, _capacity); 
+            _data = nullptr; 
         }
 
         bool try_push_back(value_type&& val)
@@ -134,8 +157,9 @@ class MessageBuffer
                 return false; 
             }
 
-            std::allocator_traits<allocator_type>::construct(_alloc, end(), val); 
-             _current++; 
+            std::allocator_traits<allocator_type>::construct(_alloc, std::to_address(end()), std::move(val)); 
+            _current++; 
+            return true; 
         }
 
         constexpr auto size() noexcept
@@ -176,18 +200,30 @@ int main()
         ~shm_remover(){ bip::shared_memory_object::remove(SHM_NAME); }
     } remover; 
 
-    bip::managed_shared_memory segment(create_only, SHM_NAME, MiB_SIZE); 
+    bip::managed_shared_memory segment(bip::create_only, SHM_NAME, MiB_SIZE); 
     
     auto* shm_manager = segment.get_segment_manager(); 
 
     const auto init_free_mem = shm_manager->get_free_memory(); 
-    std::cout << "the initial free memory is: " << "\n"; 
+    std::cout << "the initial free memory is: " << init_free_mem <<"\n"; 
     
     shmv2::allocator<void> void_alloc(shm_manager); 
     
     MessageBuffer<shmv2::Tx>* mbuf = segment.construct<MessageBuffer<shmv2::Tx>>("MBUF")(void_alloc, 10); 
     std::cout << "the size of a TX is: " << sizeof(shmv2::Tx) << '\n'; 
     std::cout << "the capacity is: " << mbuf->capacity() << "\n"; 
+
+    const auto free_mem_after_queue_init = shm_manager->get_free_memory();
+
+    auto status = mbuf->try_push_back(shmv2::Tx(addr1, addr2, v, tnonce, input2, void_alloc)); 
+    std::cout << "the tx was successfully pushed? " << status << '\n'; 
+    const auto free_mem_after_p1 = shm_manager->get_free_memory(); 
+    std::cout << "the tx used: " << free_mem_after_queue_init - free_mem_after_p1 << " bytes \n"; 
+
+    segment.destroy<MessageBuffer<shmv2::Tx>>("MBUF"); 
+    
+    const auto mem_after_q_dtor = shm_manager->get_free_memory(); 
+    std::cout << "the difference between init and final mem is: " << init_free_mem - mem_after_q_dtor << '\n'; 
     return 0; 
 }
 

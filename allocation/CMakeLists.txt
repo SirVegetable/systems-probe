@@ -29,3 +29,9 @@ add_executable(memory_usage_test memory_usage_test.cpp)
 target_include_directories(memory_usage_test PRIVATE ${Boost_INCLUDE_DIRS})
 target_compile_features(memory_usage_test PRIVATE cxx_std_23)
 target_compile_options(memory_usage_test PRIVATE -Wall -Wextra -Werror)
+
+
+add_executable(adaptive_allocator_queue adaptive_allocator_queue.cpp)
+target_include_directories(adaptive_allocator_queue PRIVATE ${Boost_INCLUDE_DIRS})
+target_compile_features(adaptive_allocator_queue PRIVATE cxx_std_23)
+target_compile_options(adaptive_allocator_queue PRIVATE -Wall -Wextra -Werror)

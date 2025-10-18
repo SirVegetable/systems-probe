@@ -1,5 +1,3 @@
-#ifndef ADAPTIVE_ALLOCATOR_QUEUE_HPP
-#define ADAPTIVE_ALLOCATOR_QUEUE_HPP
 
 #include <boost/interprocess/allocators/allocator.hpp> 
 #include <boost/interprocess/managed_shared_memory.hpp> 
@@ -146,7 +144,7 @@ class MessageBuffer
         ~MessageBuffer()
         {
             if(!is_empty()) {destroy_with_allocator(_alloc, begin(), end()); }; 
-            std::allocator_traits<allocator_type>::deallocate(_alloc, _data, _capacity); 
+            std::allocator_traits<allocator_type>::deallocate(_alloc, std::to_address(_data), _capacity); 
             _data = nullptr; 
         }
 
@@ -177,6 +175,16 @@ class MessageBuffer
             return _current > 0; 
         }
 
+        void print_nonces_in_buffer()
+        {
+            auto bsrc = begin(); 
+            auto esrc = end(); 
+            while(bsrc != esrc)
+            {
+                --esrc; 
+                std::cout << esrc->nonce << "\n"; 
+            }
+        }
     private: 
 
         constexpr iterator begin() noexcept { return _data; }
@@ -217,8 +225,11 @@ int main()
 
     auto status = mbuf->try_push_back(shmv2::Tx(addr1, addr2, v, tnonce, input2, void_alloc)); 
     std::cout << "the tx was successfully pushed? " << status << '\n'; 
+    status = mbuf->try_push_back(shmv2::Tx(addr1, addr2, v, tnonce, input2, void_alloc)); 
     const auto free_mem_after_p1 = shm_manager->get_free_memory(); 
     std::cout << "the tx used: " << free_mem_after_queue_init - free_mem_after_p1 << " bytes \n"; 
+
+    mbuf->print_nonces_in_buffer(); 
 
     segment.destroy<MessageBuffer<shmv2::Tx>>("MBUF"); 
     
@@ -228,4 +239,3 @@ int main()
 }
 
 
-#endif 

@@ -35,3 +35,9 @@ add_executable(adaptive_allocator_queue adaptive_allocator_queue.cpp)
 target_include_directories(adaptive_allocator_queue PRIVATE ${Boost_INCLUDE_DIRS})
 target_compile_features(adaptive_allocator_queue PRIVATE cxx_std_23)
 target_compile_options(adaptive_allocator_queue PRIVATE -Wall -Wextra -Werror)
+
+
+add_executable(parcel_buffer parcel_buffer.cpp)
+target_include_directories(parcel_buffer PRIVATE ${Boost_INCLUDE_DIRS})
+target_compile_features(parcel_buffer PRIVATE cxx_std_23)
+target_compile_options(parcel_buffer PRIVATE -Wall -Wextra -Werror)

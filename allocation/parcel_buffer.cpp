@@ -20,18 +20,18 @@ using scoped_alloc = std::scoped_allocator_adaptor<shm_allocator<T>>;
 
 using shm_string = bip::basic_string<char, std::char_traits<char>, scoped_alloc<char>>;
 
+using void_allocator = shm_allocator<void>; 
 // -----------------------------
 // Parcel type
 // -----------------------------
 struct Parcel
 {
-    using allocator_type = scoped_alloc<char>;
 
     int id{};
     shm_string data;
 
     // Normal constructor
-    Parcel(int i, const char* s, const allocator_type& alloc)
+    Parcel(int i, const char* s, const void_allocator& alloc)
         : id(i), data(s, alloc) {}
 
     // // Allocator-aware constructor (called by scoped_allocator_adaptor)
@@ -44,59 +44,62 @@ struct Parcel
     //     : id{}, data(alloc) {}
 };
 
-// -----------------------------
-// Fixed-size vector in shared memory
-// -----------------------------
-// template <typename T>
-// class ParcelBuffer
-// {
-// public:
-//     using allocator_type = scoped_alloc<T>;
-//     using pointer = typename std::allocator_traits<allocator_type>::pointer; 
+/*
+-----------------------------
+Fixed-size vector in shared memory
+-----------------------------
+*/
 
-//     ParcelBuffer(const allocator_type& alloc, std::size_t capacity)
-//         : _alloc(alloc), _capacity(capacity)
-//     {
-//         _data = std::allocator_traits<allocator_type>::allocate(_alloc, _capacity);
-//     }
+template <typename T>
+class ParcelBuffer
+{
+public:
+    using allocator_type = scoped_alloc<T>;
+    using pointer = typename std::allocator_traits<allocator_type>::pointer; 
 
-//     ~ParcelBuffer()
-//     {
-//         clear();
-//         std::allocator_traits<allocator_type>::deallocate(_alloc, std::to_address(_data), _capacity);
-//     }
+    ParcelBuffer(const allocator_type& alloc, std::size_t capacity)
+        : _alloc(alloc), _capacity(capacity)
+    {
+        _data = std::allocator_traits<allocator_type>::allocate(_alloc, _capacity);
+    }
 
-//     template<typename... Args>
-//     bool emplace_back(Args&&... args)
-//     {
-//         if (_size == _capacity) return false;
-//         T* p = std::to_address(_data + _size);
-//         std::allocator_traits<allocator_type>::construct(_alloc, p,
-//             std::allocator_arg, _alloc.inner_allocator(), std::forward<Args>(args)...);
-//         ++_size;
-//         return true;
-//     }
+    ~ParcelBuffer()
+    {
+        clear();
+        std::allocator_traits<allocator_type>::deallocate(_alloc, std::to_address(_data), _capacity);
+    }
 
-//     void clear()
-//     {
-//         while (_size > 0)
-//         {
-//             std::allocator_traits<allocator_type>::destroy(_alloc, std::to_address(_data + _size - 1));
-//             --_size;
-//         }
-//     }
+    template<typename... Args>
+    bool emplace_back(Args&&... args)
+    {
+        if (_size == _capacity) return false;
+        T* p = std::to_address(_data + _size);
+        std::allocator_traits<allocator_type>::construct(_alloc, p,
+            std::allocator_arg, _alloc.inner_allocator(), std::forward<Args>(args)...);
+        ++_size;
+        return true;
+    }
 
-//     constexpr auto capacity() 
-//     {
-//         return _capacity; 
-//     }
+    void clear()
+    {
+        while (_size > 0)
+        {
+            std::allocator_traits<allocator_type>::destroy(_alloc, std::to_address(_data + _size - 1));
+            --_size;
+        }
+    }
 
-// private:
-//     allocator_type _alloc;
-//     std::size_t _capacity{0};
-//     std::size_t _size{0};
-//     pointer _data{};
-// };
+    constexpr auto capacity() 
+    {
+        return _capacity; 
+    }
+
+private:
+    allocator_type _alloc;
+    std::size_t _capacity{0};
+    std::size_t _size{0};
+    pointer _data{};
+};
 
 
 int main()

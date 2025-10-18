@@ -3,6 +3,7 @@
 #include <boost/interprocess/containers/map.hpp> 
 #include <boost/interprocess/containers/string.hpp> 
 #include <boost/interprocess/containers/vector.hpp> 
+#include <iostream> 
 
 using namespace boost::interprocess; 
 
@@ -55,6 +56,9 @@ int main()
     } remover;
 
     managed_shared_memory segment(create_only, "MySharedMemory", 65536); 
+    auto* shm_manager = segment.get_segment_manager(); 
+    const auto init_free_mem = shm_manager->get_free_memory(); 
+
     void_allocator alloc_inst(segment.get_segment_manager()); 
 
     /* construct the shared memory map and fill it */
@@ -66,12 +70,15 @@ int main()
     {
         /* both key(char_string) and value(ComplexData) need an allocator instance */
         char_string key_object(alloc_inst); 
-        ComplexData mapped_obj(i, "default name", alloc_inst); 
+        ComplexData mapped_obj(i, "testing string lengths to see if destroy works", alloc_inst); 
         MapValueType value(key_object, mapped_obj); 
 
         /* modify values and insert them in the map */
         my_map->insert(value); 
     }
 
+    segment.destroy<ComplexMapType>("MyMap"); 
+    const auto after_free_mem = shm_manager->get_free_memory(); 
+    std::cout << "the difference after init and final is: " << init_free_mem - after_free_mem << "\n"; 
     return 0; 
 }

@@ -50,57 +50,37 @@ Fixed-size vector in shared memory
 -----------------------------
 */
 
-template <typename T>
+template<typename T, typename Allocator>
 class ParcelBuffer
 {
-public:
-    using allocator_type = scoped_alloc<T>;
-    using pointer = typename std::allocator_traits<allocator_type>::pointer; 
+    public: 
+        using value_type = T; 
+        using allocator_type = Allocator; 
+        using reference = value_type&; 
+        using const_reference = const value_type&; 
+        using size_type = typename std::allocator_traits<allocator_type>::size_type; 
+        using difference_type = typename std::allocator_traits<allocator_type>::difference_type; 
+        using pointer = typename std::allocator_traits<allocator_type>::pointer; 
+        using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer; 
+        using iterator = pointer; 
+        using const_iterator = const_pointer; 
+        using reverse_iterator = std::reverse_iterator(iterator); 
+        using const_reverse_iterator = std::reverse_iterator(const_iterator); 
+        static_assert(std::is_same_v<T, typename std::allocator_traits<allocator_type>::value_type>); 
 
-    ParcelBuffer(const allocator_type& alloc, std::size_t capacity)
-        : _alloc(alloc), _capacity(capacity)
-    {
-        _data = std::allocator_traits<allocator_type>::allocate(_alloc, _capacity);
-    }
-
-    ~ParcelBuffer()
-    {
-        clear();
-        std::allocator_traits<allocator_type>::deallocate(_alloc, std::to_address(_data), _capacity);
-    }
-
-    template<typename... Args>
-    bool emplace_back(Args&&... args)
-    {
-        if (_size == _capacity) return false;
-        T* p = std::to_address(_data + _size);
-        std::allocator_traits<allocator_type>::construct(_alloc, p,
-            std::allocator_arg, _alloc.inner_allocator(), std::forward<Args>(args)...);
-        ++_size;
-        return true;
-    }
-
-    void clear()
-    {
-        while (_size > 0)
+        ParcelBuffer(size_type cap, allocator_type alloc) : 
+            _capacity(cap), 
+            _alloc(alloc)
         {
-            std::allocator_traits<allocator_type>::destroy(_alloc, std::to_address(_data + _size - 1));
-            --_size;
+            _data = std::allocator_traits<allocator_type>::allocate(_alloc, cap); 
         }
-    }
+    private: 
+        allocator_type _alloc; 
+        pointer _data; 
+        size_type _end; 
+        size_type _capacity; 
 
-    constexpr auto capacity() 
-    {
-        return _capacity; 
-    }
-
-private:
-    allocator_type _alloc;
-    std::size_t _capacity{0};
-    std::size_t _size{0};
-    pointer _data{};
-};
-
+}; 
 
 int main()
 {

@@ -41,3 +41,9 @@ add_executable(parcel_buffer parcel_buffer.cpp)
 target_include_directories(parcel_buffer PRIVATE ${Boost_INCLUDE_DIRS})
 target_compile_features(parcel_buffer PRIVATE cxx_std_23)
 target_compile_options(parcel_buffer PRIVATE -Wall -Wextra -Werror)
+
+
+add_executable(sehe sehe_stackoverflow.cpp)
+target_include_directories(sehe PRIVATE ${Boost_INCLUDE_DIRS})
+target_compile_features(sehe PRIVATE cxx_std_23)
+target_compile_options(sehe PRIVATE -Wall -Wextra -Werror)

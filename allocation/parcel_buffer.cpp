@@ -5,6 +5,18 @@
 #include <iostream>
 #include <scoped_allocator>
 #include <utility> 
+#include <iterator> 
+
+
+
+template<typename A, typename IIt> 
+void destroy_with_allocator(A& alloc, IIt bsrc, IIt esrc)
+{
+    for(; bsrc != esrc; ++bsrc)
+    {
+        std::allocator_traits<A>::destroy(alloc, std::addressof(*bsrc)); 
+    }
+}
 
 namespace bip = boost::interprocess;
 
@@ -31,24 +43,10 @@ struct Parcel
     shm_string data;
 
     // Normal constructor
-    Parcel(int i, const char* s, const void_allocator& alloc)
+    Parcel(int i, const char* s, void_allocator alloc)
         : id(i), data(s, alloc) {}
 
-    // // Allocator-aware constructor (called by scoped_allocator_adaptor)
-    // Parcel(std::allocator_arg_t, const allocator_type& alloc,
-    //        int i, const char* s)
-    //     : id(i), data(s, alloc) {}
-
-    // // Default allocator-aware constructor
-    // Parcel(std::allocator_arg_t, const allocator_type& alloc)
-    //     : id{}, data(alloc) {}
 };
-
-/*
------------------------------
-Fixed-size vector in shared memory
------------------------------
-*/
 
 template<typename T, typename Allocator>
 class ParcelBuffer
@@ -64,20 +62,47 @@ class ParcelBuffer
         using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer; 
         using iterator = pointer; 
         using const_iterator = const_pointer; 
-        using reverse_iterator = std::reverse_iterator(iterator); 
-        using const_reverse_iterator = std::reverse_iterator(const_iterator); 
+        using reverse_iterator = std::reverse_iterator<iterator>; 
+        using const_reverse_iterator = std::reverse_iterator<const_iterator>; 
         static_assert(std::is_same_v<T, typename std::allocator_traits<allocator_type>::value_type>); 
 
-        ParcelBuffer(size_type cap, allocator_type alloc) : 
-            _capacity(cap), 
-            _alloc(alloc)
+        ParcelBuffer(allocator_type alloc, size_type cap) : 
+            _alloc(alloc),
+             _size(0),  
+            _capacity(cap)
         {
-            _data = std::allocator_traits<allocator_type>::allocate(_alloc, cap); 
+            _data = std::allocator_traits<allocator_type>::allocate(_alloc, _capacity); 
         }
+
+        ~ParcelBuffer()
+        {
+            clear(); 
+            std::allocator_traits<allocator_type>::deallocate(_alloc, _data, _capacity); 
+        }
+
+        template<typename... Args> 
+        void unchecked_emplace_back(Args&&... args)
+        {
+            auto p = _data + _size; 
+            std::allocator_traits<allocator_type>::construct(_alloc, std::addressof(*p), static_cast<Args&&>(args)...); 
+            _size++; 
+        }
+
+        void clear()
+        {
+            destroy_with_allocator(_alloc, begin(), end()); 
+            _size = 0; 
+        }
+        
+        iterator begin() { return _data; }
+        const_iterator begin() const {return _data; }
+        iterator end() { return _data + _size; }
+        const_iterator end() const { return _data + _size; }
+
     private: 
         allocator_type _alloc; 
         pointer _data; 
-        size_type _end; 
+        size_type _size; 
         size_type _capacity; 
 
 }; 
@@ -94,16 +119,16 @@ int main()
     
     const auto init_free = mgr->get_free_memory();
     scoped_alloc<Parcel> alloc(mgr); 
-
-    using BufVec =  std::vector<Parcel, scoped_alloc<Parcel>>; 
    
-    // using Buf = ParcelBuffer<Parcel>;
-    BufVec* buf = segment.construct<BufVec>("Buffer")(alloc);
+    using Buf = ParcelBuffer<Parcel, scoped_alloc<Parcel>>;
+    Buf* buf = segment.construct<Buf>("Buffer")(alloc, 10);
   
     for (int i = 0; i < 5; ++i)
-        buf->push_back(Parcel(i, "Hello Shared Memory!", shm_allocator<void>(mgr))); 
-    
-    segment.destroy<BufVec>("Buffer");
+    {
+        buf->unchecked_emplace_back(i, "Hello Shared Memory! This longer string will ensure no SSO happens", shm_allocator<void>(mgr)); 
+    }
+    std::cout << "Memory Used: " << init_free - mgr->get_free_memory() << '\n'; 
+    segment.destroy<Buf>("Buffer");
     const auto after_free = mgr->get_free_memory();
 
     std::cout << "Memory leak check: "
